@@ -95,8 +95,8 @@
                     <!-- GitHub Pages Connection Error Alert -->
                     <div id="github-notice" class="hidden mt-3 p-3 bg-rose-50 border border-rose-200 rounded-2xl text-left text-xs text-rose-700 space-y-1 shadow-sm">
                         <p class="font-bold flex items-center gap-1">⚠️ Firebase DB 연결 설정 필요</p>
-                        <p>GitHub Pages 등 독자적인 웹 호스팅에서 사용하려면 Google Firebase 키 설정이 필요합니다.</p>
-                        <button onclick="openConfigModal()" class="mt-1 px-3 py-1 bg-rose-600 text-white font-bold rounded-lg text-xs hover:bg-rose-700 transition">
+                        <p>GitHub Pages 등 외부 웹 호스팅에서 사용하려면 Google Firebase 키 설정이 필요합니다.</p>
+                        <button onclick="openConfigModalWithPin()" class="mt-1 px-3 py-1 bg-rose-600 text-white font-bold rounded-lg text-xs hover:bg-rose-700 transition">
                             👉 Firebase 키 입력하기
                         </button>
                     </div>
@@ -201,7 +201,7 @@
                 ⚙️ Firebase 데이터베이스 설정
             </h3>
             <p class="text-xs text-slate-500 mb-4">
-                Google Firebase 콘솔에서 발급받은 <code class="bg-slate-100 px-1 py-0.5 rounded text-rose-600 font-mono">firebaseConfig</code> JSON 또는 객체를 아래에 붙여넣으세요.
+                Google Firebase 콘솔에서 발급받은 <code class="bg-slate-100 px-1 py-0.5 rounded text-rose-600 font-mono">firebaseConfig</code> JSON 코드를 붙여넣으세요.
             </p>
 
             <textarea 
@@ -253,7 +253,7 @@
         </div>
     </div>
 
-    <!-- Custom Notification Toast/Modal -->
+    <!-- Custom Notification Toast -->
     <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 hidden transition-all">
         <div id="toast-body" class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl font-bold text-sm flex items-center space-x-2">
             <span id="toast-icon">ℹ️</span>
@@ -271,19 +271,15 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'seating-chart-27';
 
         // Column configuration: 오른쪽(창가)부터 1열(1~6번), 2열(7~11번), 3열(12~17번), 4열(18~22번), 5열(23~27번)
+        // 아래 교탁 방향으로 1, 7, 12, 18, 23번이 오도록 배열 배치 (위: 뒷자리 -> 아래: 앞자리)
         const COLUMNS_CONFIG = [
-            { name: '5열', seats: [27, 26, 25, 24, 23] },
+            { name: '5열 (복도)', seats: [27, 26, 25, 24, 23] },
             { name: '4열', seats: [22, 21, 20, 19, 18] },
             { name: '3열', seats: [17, 16, 15, 14, 13, 12] },
             { name: '2열', seats: [11, 10, 9, 8, 7] },
-            { name: '1열', seats: [6, 5, 4, 3, 2, 1] }
+            { name: '1열 (창가)', seats: [6, 5, 4, 3, 2, 1] }
         ];
 
-        // ==============================================================
-        // 🚨 [Firebase 키 설정 구역]
-        // GitHub에서 index.html 파일 수정 시 아래 firebaseConfig 내용을
-        // 파이어베이스에서 복사한 값으로 대체해주시면 자동 연결됩니다!
-        // ==============================================================
         let firebaseConfig = {
             apiKey: "AIzaSyDummyKeyForAppRunnerOnly12345",
             authDomain: `${appId}.firebaseapp.com`,
@@ -293,7 +289,6 @@
             appId: "1:1234567890:web:abcdef123456"
         };
 
-        // Priority 1: User's saved custom config in localStorage
         const savedCustomConfig = localStorage.getItem('custom_firebase_config');
         if (savedCustomConfig) {
             try {
@@ -301,9 +296,7 @@
             } catch(e) {
                 console.error("Failed to parse local stored firebase config", e);
             }
-        } 
-        // Priority 2: Platform injected config
-        else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+        } else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             try {
                 firebaseConfig = JSON.parse(__firebase_config);
             } catch (e) {
@@ -315,7 +308,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Firestore Path Rule 1: /artifacts/{appId}/public/data/{collectionName}
+        // Firestore Path
         const seatingDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'seating_data', 'seats_doc');
 
         let currentSeats = {};
@@ -349,111 +342,12 @@
             }
         }
 
-        // Configuration Modal Controls
-        window.openConfigModalWithPin = function() {
-            const input = prompt("선생님 비밀번호를 입력하세요 (기본: 1234):");
-            if (input === '1234') {
-                openConfigModal();
-            } else if (input !== null) {
-                showToast("비밀번호가 올바르지 않습니다.", "❌");
-            }
-        };
-
-        window.openConfigModal = function() {
-            const saved = localStorage.getItem('custom_firebase_config');
-            if (saved) {
-                document.getElementById('config-json-input').value = saved;
-            }
-            document.getElementById('config-modal').classList.remove('hidden');
-        };
-
-        window.closeConfigModal = function() {
-            document.getElementById('config-modal').classList.add('hidden');
-        };
-
-        window.saveCustomConfig = function() {
-            const val = document.getElementById('config-json-input').value.trim();
-            if (!val) {
-                showToast("설정 내용을 입력해주세요.", "⚠️");
-                return;
-            }
-            try {
-                // Validate JSON syntax or Object string
-                let parsed;
-                if (val.startsWith('{')) {
-                    parsed = JSON.parse(val);
-                } else {
-                    // Try to wrap or clean basic object format
-                    parsed = JSON.parse('{' + val.replace(/(\w+):/g, '"$1":').replace(/'/g, '"') + '}');
-                }
-                localStorage.setItem('custom_firebase_config', JSON.stringify(parsed));
-                showToast("Firebase 설정이 저장되었습니다. 페이지를 새로고침합니다.", "✅");
-                setTimeout(() => window.location.reload(), 1000);
-            } catch (e) {
-                showToast("올바른 JSON 형식의 Firebase 설정이 아닙니다.", "❌");
-            }
-        };
-
-        window.clearCustomConfig = function() {
-            localStorage.removeItem('custom_firebase_config');
-            document.getElementById('config-json-input').value = '';
-            showToast("설정이 초기화되었습니다.", "🔄");
-        };
-
-        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            try {
-                firebaseConfig = JSON.parse(__firebase_config);
-            } catch (e) {
-                console.error("Failed to parse firebase config", e);
-            }
-        }
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Firestore Path Rule 1: /artifacts/{appId}/public/data/{collectionName}
-        const seatingDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'seating_data', 'seats_doc');
-
-        let currentSeats = {}; // Object: { "1": { name: "홍길동", time: 123 }, "2": null, ... }
-        let currentUserSeat = null;
-
-        // Initialize empty seat map if doc doesn't exist
-        function createInitialSeatMap() {
-            const seats = {};
-            for (let i = 1; i <= TOTAL_SEATS; i++) {
-                seats[i] = null;
-            }
-            return seats;
-        }
-
-        // Authentication & Initialization
-        async function initAuth() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                document.getElementById('status-indicator').textContent = '온라인 (동기화됨)';
-                document.getElementById('status-indicator').className = 'font-bold text-emerald-600';
-                
-                listenToSeatingData();
-            } catch (err) {
-                console.error("Auth error:", err);
-                document.getElementById('status-indicator').textContent = '연결 오류';
-                document.getElementById('status-indicator').className = 'font-bold text-rose-500';
-            }
-        }
-
-        // Real-time Firestore Listener
         function listenToSeatingData() {
             onSnapshot(seatingDocRef, (snapshot) => {
                 if (snapshot.exists()) {
                     currentSeats = snapshot.data().seats || createInitialSeatMap();
                 } else {
                     currentSeats = createInitialSeatMap();
-                    // Create initial document
                     setDoc(seatingDocRef, { seats: currentSeats }, { merge: true }).catch(console.error);
                 }
                 
@@ -465,11 +359,9 @@
             });
         }
 
-        // Check if student already has a seat saved locally or in current dataset
         function checkLocalUserSeat() {
             const savedName = localStorage.getItem('my_student_name');
             if (savedName) {
-                // Find if this name exists in currentSeats
                 let foundSeat = null;
                 for (let num = 1; num <= TOTAL_SEATS; num++) {
                     if (currentSeats[num] && currentSeats[num].name === savedName) {
@@ -482,7 +374,6 @@
                     currentUserSeat = foundSeat;
                     showResultCard(savedName, foundSeat);
                 } else {
-                    // Reset if cleared on board
                     localStorage.removeItem('my_student_name');
                     showDrawForm();
                 }
@@ -503,7 +394,6 @@
             document.getElementById('draw-form-card').classList.remove('hidden');
         }
 
-        // Handle Draw Seat Action
         window.handleDrawSeat = async function(event) {
             event.preventDefault();
             const nameInput = document.getElementById('student-name-input');
@@ -521,20 +411,17 @@
             try {
                 let assignedSeat = null;
 
-                // Run atomic transaction to assign random seat
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(seatingDocRef);
                     let seatsData = sfDoc.exists() ? sfDoc.data().seats : createInitialSeatMap();
 
-                    // Check if name is already drawn
                     for (let s = 1; s <= TOTAL_SEATS; s++) {
                         if (seatsData[s] && seatsData[s].name === studentName) {
                             assignedSeat = s;
-                            return; // Already has seat
+                            return;
                         }
                     }
 
-                    // Find available seat numbers
                     const availableSeats = [];
                     for (let s = 1; s <= TOTAL_SEATS; s++) {
                         if (!seatsData[s]) {
@@ -546,11 +433,9 @@
                         throw new Error("FULL");
                     }
 
-                    // Pick random available seat
                     const randomIndex = Math.floor(Math.random() * availableSeats.length);
                     assignedSeat = availableSeats[randomIndex];
 
-                    // Assign seat
                     seatsData[assignedSeat] = {
                         name: studentName,
                         drawnAt: Date.now()
@@ -576,7 +461,6 @@
             }
         };
 
-        // Render Board (5 Columns Layout: 1&3 cols = 6 seats, 2,4,5 cols = 5 seats)
         function renderBoard() {
             const gridContainer = document.getElementById('seating-grid');
             gridContainer.innerHTML = '';
@@ -587,7 +471,6 @@
                 const colDiv = document.createElement('div');
                 colDiv.className = 'flex flex-col gap-2 md:gap-3 w-full h-full';
 
-                // Column Header
                 const header = document.createElement('div');
                 header.className = 'text-center text-xs font-bold text-slate-500 py-1 bg-slate-200/60 rounded-lg mb-auto';
                 header.textContent = col.name;
@@ -635,7 +518,54 @@
             document.getElementById('filled-count').textContent = filledCount;
         }
 
-        // Confirm & Reset seats
+        window.openConfigModalWithPin = function() {
+            const input = prompt("선생님 비밀번호를 입력하세요 (기본: 1234):");
+            if (input === '1234') {
+                openConfigModal();
+            } else if (input !== null) {
+                showToast("비밀번호가 올바르지 않습니다.", "❌");
+            }
+        };
+
+        window.openConfigModal = function() {
+            const saved = localStorage.getItem('custom_firebase_config');
+            if (saved) {
+                document.getElementById('config-json-input').value = saved;
+            }
+            document.getElementById('config-modal').classList.remove('hidden');
+        };
+
+        window.closeConfigModal = function() {
+            document.getElementById('config-modal').classList.add('hidden');
+        };
+
+        window.saveCustomConfig = function() {
+            const val = document.getElementById('config-json-input').value.trim();
+            if (!val) {
+                showToast("설정 내용을 입력해주세요.", "⚠️");
+                return;
+            }
+            try {
+                let parsed;
+                if (val.startsWith('{')) {
+                    parsed = JSON.parse(val);
+                } else {
+                    parsed = JSON.parse('{' + val.replace(/(\w+):/g, '"$1":').replace(/'/g, '"') + '}');
+                }
+                localStorage.setItem('custom_firebase_config', JSON.stringify(parsed));
+                showToast("Firebase 설정이 저장되었습니다. 페이지를 새로고침합니다.", "✅");
+                setTimeout(() => window.location.reload(), 1000);
+            } catch (e) {
+                showToast("올바른 JSON 형식의 Firebase 설정이 아닙니다.", "❌");
+            }
+        };
+
+        window.clearCustomConfig = function() {
+            localStorage.removeItem('custom_firebase_config');
+            document.getElementById('config-json-input').value = '';
+            showToast("설정이 초기화되었습니다.", "🔄");
+        };
+
         window.confirmReset = async function() {
             const pinInput = document.getElementById('reset-pin-input').value.trim();
             if (pinInput !== '1234') {
@@ -654,11 +584,10 @@
                 showToast("모든 자리가 성공적으로 초기화되었습니다.", "🔄");
             } catch (err) {
                 console.error("Reset error:", err);
-                showToast("초기화 실패했습니다.", "❌");
+                showToast("초기화에 실패했습니다.", "❌");
             }
         };
 
-        // Navigation Switcher
         window.switchView = function(viewName) {
             const drawView = document.getElementById('view-student-draw');
             const boardView = document.getElementById('view-classroom-board');
@@ -680,7 +609,6 @@
             }
         };
 
-        // Modal Controls
         window.openResetModal = () => {
             document.getElementById('reset-pin-input').value = '';
             document.getElementById('reset-modal').classList.remove('hidden');
@@ -695,7 +623,6 @@
         };
         window.closeQRModal = () => document.getElementById('qr-modal').classList.add('hidden');
 
-        // Toast Helper
         function showToast(message, icon = "ℹ️") {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').textContent = message;
@@ -707,12 +634,10 @@
             }, 3000);
         }
 
-        // Helper to sanitize text
         function escapeHtml(str) {
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
-        // Start initialization on window load
         window.onload = function() {
             initAuth();
         };

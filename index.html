@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>자리 뽑기</title>
+    <title>27명 학생 자리 뽑기</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -30,6 +30,9 @@
                 </button>
                 <button id="nav-board-btn" onclick="switchView('board')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
                     전체 배치도 (5열)
+                </button>
+                <button onclick="openConfigModalWithPin()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 transition">
+                    ⚙️ DB 설정
                 </button>
             </div>
         </div>
@@ -89,6 +92,14 @@
                     <p class="text-xs text-slate-400">
                         현재 접속 상태: <span id="status-indicator" class="font-bold text-amber-500">연결 중...</span>
                     </p>
+                    <!-- GitHub Pages Connection Error Alert -->
+                    <div id="github-notice" class="hidden mt-3 p-3 bg-rose-50 border border-rose-200 rounded-2xl text-left text-xs text-rose-700 space-y-1 shadow-sm">
+                        <p class="font-bold flex items-center gap-1">⚠️ Firebase DB 연결 설정 필요</p>
+                        <p>GitHub Pages 등 독자적인 웹 호스팅에서 사용하려면 Google Firebase 키 설정이 필요합니다.</p>
+                        <button onclick="openConfigModal()" class="mt-1 px-3 py-1 bg-rose-600 text-white font-bold rounded-lg text-xs hover:bg-rose-700 transition">
+                            👉 Firebase 키 입력하기
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -155,16 +166,70 @@
     <!-- Reset Confirmation Modal -->
     <div id="reset-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center">
-            <div class="text-4xl mb-2">⚠️</div>
-            <h3 class="text-xl font-bold text-slate-800 mb-2">전체 자리 초기화</h3>
-            <p class="text-sm text-slate-500 mb-6">모든 학생의 자리 배치 결과가 삭제되고 처음 상태로 돌아갑니다. 계속하시겠습니까?</p>
+            <div class="text-4xl mb-2">🔒</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-1">전체 자리 초기화</h3>
+            <p class="text-xs text-rose-500 font-bold mb-4">⚠️ 선생님 전용 기능입니다. 비밀번호를 입력하세요.</p>
+            
+            <div class="mb-4">
+                <input 
+                    type="password" 
+                    id="reset-pin-input" 
+                    placeholder="비밀번호 입력 (기본: 1234)" 
+                    maxlength="10"
+                    class="w-full px-4 py-3 text-center text-lg font-bold border-2 border-slate-300 rounded-xl focus:border-rose-500 outline-none transition"
+                />
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <button onclick="closeResetModal()" class="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition">
                     취소
                 </button>
                 <button onclick="confirmReset()" class="py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-sm shadow transition">
-                    초기화하기
+                    초기화 실행
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Custom Config Modal -->
+    <div id="config-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
+            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">
+                ✕
+            </button>
+            <h3 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                ⚙️ Firebase 데이터베이스 설정
+            </h3>
+            <p class="text-xs text-slate-500 mb-4">
+                Google Firebase 콘솔에서 발급받은 <code class="bg-slate-100 px-1 py-0.5 rounded text-rose-600 font-mono">firebaseConfig</code> JSON 또는 객체를 아래에 붙여넣으세요.
+            </p>
+
+            <textarea 
+                id="config-json-input" 
+                rows="6" 
+                placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "myproject.firebaseapp.com",
+  "projectId": "myproject",
+  "storageBucket": "myproject.appspot.com",
+  "messagingSenderId": "123456...",
+  "appId": "1:123456..."
+}'
+                class="w-full p-3 font-mono text-xs border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition mb-3"
+            ></textarea>
+
+            <div class="flex justify-between items-center gap-2">
+                <button onclick="clearCustomConfig()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition">
+                    초기화
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                        취소
+                    </button>
+                    <button onclick="saveCustomConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition">
+                        설정 저장 & 연결
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -202,12 +267,10 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global state and constants
         const TOTAL_SEATS = 27;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'seating-chart-27';
 
-        // Column configuration: 오른쪽(창가)부터 1열(6명), 2열(5명), 3열(6명), 4열(5명), 5열(5명)
-        // 교탁(앞쪽)이 아래쪽에 위치하므로 1번, 7번, 12번, 18번, 23번(맨 앞줄)이 아래쪽(교탁 앞)에 위치하도록 배치
+        // Column configuration: 오른쪽(창가)부터 1열(1~6번), 2열(7~11번), 3열(12~17번), 4열(18~22번), 5열(23~27번)
         const COLUMNS_CONFIG = [
             { name: '5열', seats: [27, 26, 25, 24, 23] },
             { name: '4열', seats: [22, 21, 20, 19, 18] },
@@ -216,15 +279,126 @@
             { name: '1열', seats: [6, 5, 4, 3, 2, 1] }
         ];
 
-        // Firebase Setup
+        // ==============================================================
+        // 🚨 [Firebase 키 설정 구역]
+        // GitHub에서 index.html 파일 수정 시 아래 firebaseConfig 내용을
+        // 파이어베이스에서 복사한 값으로 대체해주시면 자동 연결됩니다!
+        // ==============================================================
         let firebaseConfig = {
-    apiKey: "AIzaSyBr9qMshCYB_Qm15OUiVsLoJkxIkJ2hgNA",
-    authDomain: "seat261006.firebaseapp.com",
-    projectId: "seat261006",
-    storageBucket: "seat261006.firebasestorage.app",
-    messagingSenderId: "397864459268",
-    appId: "1:397864459268:web:634270bf0726d5437c2951"
-  };
+            apiKey: "AIzaSyDummyKeyForAppRunnerOnly12345",
+            authDomain: `${appId}.firebaseapp.com`,
+            projectId: appId,
+            storageBucket: `${appId}.appspot.com`,
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+        };
+
+        // Priority 1: User's saved custom config in localStorage
+        const savedCustomConfig = localStorage.getItem('custom_firebase_config');
+        if (savedCustomConfig) {
+            try {
+                firebaseConfig = JSON.parse(savedCustomConfig);
+            } catch(e) {
+                console.error("Failed to parse local stored firebase config", e);
+            }
+        } 
+        // Priority 2: Platform injected config
+        else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+            } catch (e) {
+                console.error("Failed to parse firebase config", e);
+            }
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Firestore Path Rule 1: /artifacts/{appId}/public/data/{collectionName}
+        const seatingDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'seating_data', 'seats_doc');
+
+        let currentSeats = {};
+        let currentUserSeat = null;
+
+        function createInitialSeatMap() {
+            const seats = {};
+            for (let i = 1; i <= TOTAL_SEATS; i++) {
+                seats[i] = null;
+            }
+            return seats;
+        }
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                document.getElementById('status-indicator').textContent = '온라인 (동기화됨)';
+                document.getElementById('status-indicator').className = 'font-bold text-emerald-600';
+                document.getElementById('github-notice').classList.add('hidden');
+                
+                listenToSeatingData();
+            } catch (err) {
+                console.error("Auth error:", err);
+                document.getElementById('status-indicator').textContent = '연결 오류';
+                document.getElementById('status-indicator').className = 'font-bold text-rose-500';
+                document.getElementById('github-notice').classList.remove('hidden');
+            }
+        }
+
+        // Configuration Modal Controls
+        window.openConfigModalWithPin = function() {
+            const input = prompt("선생님 비밀번호를 입력하세요 (기본: 1234):");
+            if (input === '1234') {
+                openConfigModal();
+            } else if (input !== null) {
+                showToast("비밀번호가 올바르지 않습니다.", "❌");
+            }
+        };
+
+        window.openConfigModal = function() {
+            const saved = localStorage.getItem('custom_firebase_config');
+            if (saved) {
+                document.getElementById('config-json-input').value = saved;
+            }
+            document.getElementById('config-modal').classList.remove('hidden');
+        };
+
+        window.closeConfigModal = function() {
+            document.getElementById('config-modal').classList.add('hidden');
+        };
+
+        window.saveCustomConfig = function() {
+            const val = document.getElementById('config-json-input').value.trim();
+            if (!val) {
+                showToast("설정 내용을 입력해주세요.", "⚠️");
+                return;
+            }
+            try {
+                // Validate JSON syntax or Object string
+                let parsed;
+                if (val.startsWith('{')) {
+                    parsed = JSON.parse(val);
+                } else {
+                    // Try to wrap or clean basic object format
+                    parsed = JSON.parse('{' + val.replace(/(\w+):/g, '"$1":').replace(/'/g, '"') + '}');
+                }
+                localStorage.setItem('custom_firebase_config', JSON.stringify(parsed));
+                showToast("Firebase 설정이 저장되었습니다. 페이지를 새로고침합니다.", "✅");
+                setTimeout(() => window.location.reload(), 1000);
+            } catch (e) {
+                showToast("올바른 JSON 형식의 Firebase 설정이 아닙니다.", "❌");
+            }
+        };
+
+        window.clearCustomConfig = function() {
+            localStorage.removeItem('custom_firebase_config');
+            document.getElementById('config-json-input').value = '';
+            showToast("설정이 초기화되었습니다.", "🔄");
+        };
 
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             try {
@@ -463,6 +637,12 @@
 
         // Confirm & Reset seats
         window.confirmReset = async function() {
+            const pinInput = document.getElementById('reset-pin-input').value.trim();
+            if (pinInput !== '1234') {
+                showToast("비밀번호가 틀렸습니다! (기본: 1234)", "❌");
+                return;
+            }
+
             try {
                 const emptySeats = createInitialSeatMap();
                 await setDoc(seatingDocRef, { seats: emptySeats });
@@ -471,7 +651,7 @@
                 closeResetModal();
                 showDrawForm();
                 document.getElementById('student-name-input').value = '';
-                showToast("모든 자리가 초기화되었습니다.", "🔄");
+                showToast("모든 자리가 성공적으로 초기화되었습니다.", "🔄");
             } catch (err) {
                 console.error("Reset error:", err);
                 showToast("초기화 실패했습니다.", "❌");
@@ -501,7 +681,10 @@
         };
 
         // Modal Controls
-        window.openResetModal = () => document.getElementById('reset-modal').classList.remove('hidden');
+        window.openResetModal = () => {
+            document.getElementById('reset-pin-input').value = '';
+            document.getElementById('reset-modal').classList.remove('hidden');
+        };
         window.closeResetModal = () => document.getElementById('reset-modal').classList.add('hidden');
 
         window.openQRModal = () => {

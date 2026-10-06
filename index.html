@@ -14,26 +14,42 @@
         }
     </style>
 </head>
-<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+<body class="min-h-screen text-slate-800 flex flex-col justify-between select-none">
 
     <!-- Top Navigation Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <span class="text-2xl">🏫</span>
-                <h1 class="text-xl font-bold text-slate-800">27명 자리 뽑기</h1>
+                <h1 class="text-lg md:text-xl font-bold text-slate-800">27명 자리 뽑기</h1>
             </div>
-            <!-- View Mode Switcher -->
-            <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl">
-                <button id="nav-draw-btn" onclick="switchView('draw')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm">
-                    학생 뽑기
-                </button>
-                <button id="nav-board-btn" onclick="switchView('board')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
-                    전체 배치도 (5열)
-                </button>
-                <button onclick="openConfigModalWithPin()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 transition">
-                    ⚙️ DB 설정
-                </button>
+
+            <!-- Header Controls -->
+            <div class="flex items-center space-x-2">
+                <!-- Student View Controls -->
+                <div id="student-header-controls" class="flex items-center">
+                    <button onclick="openTeacherAuthModal()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1 border border-slate-300">
+                        <span>🔒</span>
+                        <span>교사 인증</span>
+                    </button>
+                </div>
+
+                <!-- Teacher View Controls -->
+                <div id="teacher-header-controls" class="hidden flex items-center space-x-2 bg-indigo-50 p-1 rounded-xl border border-indigo-100">
+                    <span class="text-xs font-bold text-indigo-700 px-2 hidden sm:inline">✅ 교사 모드</span>
+                    <button id="nav-draw-btn" onclick="switchView('draw')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-600 shadow-sm">
+                        학생 뽑기
+                    </button>
+                    <button id="nav-board-btn" onclick="switchView('board')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900">
+                        전체 배치도
+                    </button>
+                    <button onclick="openConfigModal()" class="px-2 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 transition">
+                        ⚙️ DB
+                    </button>
+                    <button onclick="logoutTeacher()" class="px-2 py-1.5 rounded-lg text-xs font-semibold bg-rose-100 hover:bg-rose-200 text-rose-700 transition">
+                        로그아웃
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -41,22 +57,30 @@
     <!-- Main Content Container -->
     <main class="flex-grow flex items-center justify-center p-4 max-w-5xl mx-auto w-full">
 
-        <!-- VIEW 1: Student Seat Draw Screen (Default) -->
+        <!-- VIEW 1: Student Seat Draw Screen -->
         <section id="view-student-draw" class="w-full max-w-lg mx-auto py-6">
             
-            <!-- Result Display Card (Shows when already drawn) -->
+            <!-- Result Display Card -->
             <div id="result-card" class="hidden mb-6 bg-emerald-50 border-2 border-emerald-400 rounded-3xl p-6 text-center shadow-lg transition-all">
                 <p class="text-emerald-700 font-medium text-lg mb-1"><span id="result-student-name" class="font-bold text-emerald-900"></span> 학생의 자리</p>
-                <div class="text-6xl font-black text-emerald-600 my-3">
+                <div class="text-6xl font-black text-emerald-600 my-4">
                     <span id="result-seat-number">0</span><span class="text-2xl font-bold ml-1">번</span>
                 </div>
-                <p class="text-sm text-emerald-600 font-medium">✨ 자리가 지정되었습니다! 전체 배치도에서 확인하세요.</p>
-                <button onclick="switchView('board')" class="mt-4 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow transition">
-                    5열 배치도 전체보기 ➔
-                </button>
+                <p id="result-badge" class="text-sm text-emerald-700 font-bold bg-emerald-100 py-2 px-4 rounded-xl inline-block mb-2">
+                    ✨ 자리가 지정되었습니다!
+                </p>
+                <p class="text-xs text-emerald-600 font-medium mt-1">
+                    선생님 화면의 전체 배치도를 확인해 주세요.
+                </p>
+                
+                <div id="teacher-result-action" class="hidden mt-4 pt-3 border-t border-emerald-200">
+                    <button onclick="switchView('board')" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow transition">
+                        5열 배치도 전체보기 ➔
+                    </button>
+                </div>
             </div>
 
-            <!-- Form Card (Big and prominent) -->
+            <!-- Form Card -->
             <div id="draw-form-card" class="bg-white border-2 border-slate-200 rounded-3xl p-6 md:p-8 shadow-xl">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl md:text-3xl font-black text-slate-800">자리 뽑기</h2>
@@ -92,13 +116,30 @@
                     <p class="text-xs text-slate-400">
                         현재 접속 상태: <span id="status-indicator" class="font-bold text-amber-500">연결 중...</span>
                     </p>
-                    <!-- GitHub Pages Connection Error Alert -->
-                    <div id="github-notice" class="hidden mt-3 p-3 bg-rose-50 border border-rose-200 rounded-2xl text-left text-xs text-rose-700 space-y-1 shadow-sm">
-                        <p class="font-bold flex items-center gap-1">⚠️ Firebase DB 연결 설정 필요</p>
-                        <p>GitHub Pages 등 외부 웹 호스팅에서 사용하려면 Google Firebase 키 설정이 필요합니다.</p>
-                        <button onclick="openConfigModalWithPin()" class="mt-1 px-3 py-1 bg-rose-600 text-white font-bold rounded-lg text-xs hover:bg-rose-700 transition">
-                            👉 Firebase 키 입력하기
-                        </button>
+
+                    <!-- Firebase Detailed Error Diagnostic Notice -->
+                    <div id="github-notice" class="hidden mt-4 p-4 bg-rose-50 border border-rose-300 rounded-2xl text-left text-xs text-rose-800 space-y-3 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <p class="font-bold text-sm flex items-center gap-1 text-rose-900">⚠️️ DB 데이터 동기화 오류</p>
+                            <span id="error-code-badge" class="font-mono text-[10px] bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full font-bold">ERR</span>
+                        </div>
+                        
+                        <p id="error-summary-text" class="leading-relaxed font-semibold text-rose-950">
+                            Firebase 서버 연결 또는 권한에 문제가 발생했습니다.
+                        </p>
+
+                        <div id="error-solution-box" class="bg-white p-3 rounded-xl border border-rose-200 font-sans text-xs text-slate-700 leading-normal space-y-1">
+                            <!-- Dynamic solution instructions inserted here -->
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="initAuth()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1">
+                                <span>🔄</span> <span>연결 다시 시도</span>
+                            </button>
+                            <button onclick="openTeacherAuthModal()" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition">
+                                🔐 교사 인증
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -106,7 +147,6 @@
 
         <!-- VIEW 2: Classroom Board (5 Columns Layout) -->
         <section id="view-classroom-board" class="hidden w-full py-4">
-            <!-- Header bar for Board -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 mb-6 flex flex-wrap justify-between items-center gap-4 shadow-sm">
                 <div>
                     <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -129,9 +169,8 @@
                 </div>
             </div>
 
-            <!-- Classroom Layout Wrapper -->
+            <!-- Seating Board -->
             <div class="bg-slate-50 p-3 md:p-5 rounded-3xl border border-slate-200 shadow-sm">
-                <!-- Corridor (Left) and Window (Right) Indicators -->
                 <div class="flex justify-between items-center mb-4 px-2 font-bold text-sm">
                     <div class="bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-sm">
                         <span>🚪</span> 복도 (왼쪽)
@@ -144,12 +183,10 @@
                     </div>
                 </div>
 
-                <!-- 5 Columns Seating Grid Container -->
                 <div id="seating-grid" class="grid grid-cols-5 gap-2 md:gap-3 w-full mb-6">
-                    <!-- Column layout dynamically generated via JS -->
+                    <!-- Dynamic seats -->
                 </div>
 
-                <!-- Blackboard / Teacher's Desk at Bottom (Front of Classroom) -->
                 <div class="w-full bg-slate-800 text-white text-center py-3.5 rounded-2xl font-black text-base md:text-lg tracking-wider shadow-md border-b-4 border-slate-900 flex items-center justify-center gap-2">
                     <span>👨‍🏫</span> [ 교 탁 / 칠 판 (앞쪽) ]
                 </div>
@@ -163,97 +200,106 @@
         실시간 동기화 자리 배치 시스템 &bull; 총 27석 (5열)
     </footer>
 
-    <!-- Reset Confirmation Modal -->
-    <div id="reset-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center">
-            <div class="text-4xl mb-2">🔒</div>
-            <h3 class="text-xl font-bold text-slate-800 mb-1">전체 자리 초기화</h3>
-            <p class="text-xs text-rose-500 font-bold mb-4">⚠️ 선생님 전용 기능입니다. 비밀번호를 입력하세요.</p>
+    <!-- Modals -->
+    <div id="teacher-auth-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center relative">
+            <button onclick="closeTeacherAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+            <div class="text-4xl mb-2">🔐</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-1">교사 인증</h3>
+            <p class="text-xs text-slate-500 font-medium mb-4">선생님 비밀번호를 입력해주세요.</p>
             
-            <div class="mb-4">
-                <input 
-                    type="password" 
-                    id="reset-pin-input" 
-                    placeholder="비밀번호 입력" 
-                    maxlength="10"
-                    class="w-full px-4 py-3 text-center text-lg font-bold border-2 border-slate-300 rounded-xl focus:border-rose-500 outline-none transition"
-                />
-            </div>
+            <form onsubmit="handleTeacherAuth(event)" class="space-y-4">
+                <div>
+                    <input 
+                        type="password" 
+                        id="teacher-password-input" 
+                        placeholder="비밀번호 입력" 
+                        required
+                        class="w-full px-4 py-3 text-center text-lg font-bold border-2 border-slate-300 rounded-xl focus:border-indigo-500 outline-none transition"
+                    />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="closeTeacherAuthModal()" class="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition">취소</button>
+                    <button type="submit" class="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow transition">인증하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
+    <!-- Reset Modal -->
+    <div id="reset-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center">
+            <div class="text-4xl mb-2">⚠️️</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-1">전체 자리 초기화</h3>
+            <p class="text-xs text-rose-500 font-bold mb-4">모든 학생의 자리 정보가 초기화됩니다.</p>
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="closeResetModal()" class="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition">
-                    취소
-                </button>
-                <button onclick="confirmReset()" class="py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-sm shadow transition">
-                    초기화 실행
-                </button>
+                <button onclick="closeResetModal()" class="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition">취소</button>
+                <button onclick="confirmReset()" class="py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-sm shadow transition">초기화 실행</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase Custom Config Modal -->
-    <div id="config-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
-            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">
-                ✕
-            </button>
-            <h3 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
-                ⚙️ Firebase 데이터베이스 설정
-            </h3>
-            <p class="text-xs text-slate-500 mb-4">
-                Google Firebase 콘솔에서 발급받은 <code class="bg-slate-100 px-1 py-0.5 rounded text-rose-600 font-mono">firebaseConfig</code> JSON 코드를 붙여넣으세요.
+    <!-- Duplicate Modal -->
+    <div id="duplicate-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center relative">
+            <div class="text-4xl mb-2">⚠️</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">이름 중복 확인</h3>
+            <p class="text-sm text-slate-600 font-medium mb-6 leading-relaxed">
+                <span id="duplicate-name-display" class="font-bold text-indigo-600 text-base"></span> 학생은 이미 자리를 뽑았습니다.<br><br>
+                <strong class="text-slate-800 text-base">본인의 이름이 확실합니까?</strong>
             </p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="rejectDuplicateName()" class="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition">아니오</button>
+                <button onclick="confirmDuplicateName()" class="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow transition">예 (다시 뽑기)</button>
+            </div>
+        </div>
+    </div>
 
+    <!-- Config Modal -->
+    <div id="config-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl relative">
+            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+            <div class="text-3xl mb-2">⚙️</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-1">Firebase DB 커스텀 설정</h3>
+            <p class="text-xs text-slate-500 font-medium mb-4">
+                발급받은 <code class="bg-slate-100 text-indigo-600 px-1 rounded">firebaseConfig</code> JSON을 붙여넣어 주세요.
+            </p>
             <textarea 
                 id="config-json-input" 
                 rows="6" 
                 placeholder='{
   "apiKey": "AIzaSy...",
-  "authDomain": "myproject.firebaseapp.com",
-  "projectId": "myproject",
-  "storageBucket": "myproject.appspot.com",
-  "messagingSenderId": "123456...",
-  "appId": "1:123456..."
+  "authDomain": "...",
+  "projectId": "..."
 }'
-                class="w-full p-3 font-mono text-xs border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition mb-3"
+                class="w-full p-3 font-mono text-xs border border-slate-300 rounded-xl focus:border-indigo-500 outline-none mb-4"
             ></textarea>
-
             <div class="flex justify-between items-center gap-2">
-                <button onclick="clearCustomConfig()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition">
-                    초기화
-                </button>
+                <button onclick="clearCustomConfig()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">설정 초기화</button>
                 <div class="flex gap-2">
-                    <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
-                        취소
-                    </button>
-                    <button onclick="saveCustomConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition">
-                        설정 저장 & 연결
-                    </button>
+                    <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition">취소</button>
+                    <button onclick="saveCustomConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow transition">저장 & 연결</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- QR Code Modal -->
-    <div id="qr-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <!-- QR Modal -->
+    <div id="qr-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center relative">
-            <button onclick="closeQRModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">
-                ✕
-            </button>
-            <h3 class="text-lg font-bold text-slate-800 mb-1">학생 접속용 QR 코드</h3>
-            <p class="text-xs text-slate-500 mb-4">스마트폰 카메라로 스캔하여 접속하세요</p>
-
-            <div class="bg-slate-50 p-4 rounded-2xl inline-block border border-slate-200 mb-4">
-                <img id="qr-image" src="" alt="접속 QR코드" class="w-48 h-48 mx-auto rounded-lg">
+            <button onclick="closeQRModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+            <div class="text-3xl mb-2">📱</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-1">학생 접속용 QR 코드</h3>
+            <p class="text-xs text-slate-500 font-medium mb-4">스마트폰 카메라로 스캔하여 접속하세요.</p>
+            <div class="flex justify-center mb-4 p-3 bg-white border border-slate-200 rounded-2xl shadow-inner">
+                <img id="qr-image" src="" alt="QR Code" class="w-48 h-48 object-contain" />
             </div>
-
-            <div class="text-xs text-slate-400 break-all px-2" id="qr-url-text">
-                -
-            </div>
+            <p id="qr-url-text" class="text-[11px] font-mono text-slate-500 break-all bg-slate-50 p-2 rounded-xl mb-4 border border-slate-200"></p>
+            <button onclick="closeQRModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-sm transition">닫기</button>
         </div>
     </div>
 
-    <!-- Custom Notification Toast -->
+    <!-- Toast Notification -->
     <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 hidden transition-all">
         <div id="toast-body" class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl font-bold text-sm flex items-center space-x-2">
             <span id="toast-icon">ℹ️</span>
@@ -261,17 +307,17 @@
         </div>
     </div>
 
-    <!-- Firebase Script (Module) -->
+    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const TOTAL_SEATS = 27;
+        const TEACHER_PASSWORD = "tjdwl270107";
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'seat261006';
 
-        // Column configuration: 오른쪽(창가)부터 1열(1~6번), 2열(7~11번), 3열(12~17번), 4열(18~22번), 5열(23~27번)
-        // 아래 교탁 방향으로 1, 7, 12, 18, 23번이 오도록 배열 배치 (위: 뒷자리 -> 아래: 앞자리)
+        // Column Config: 1열(창가, 오) ~ 5열(복도, 왼), 교탁(아래)
         const COLUMNS_CONFIG = [
             { name: '5열 (복도)', seats: [27, 26, 25, 24, 23] },
             { name: '4열', seats: [22, 21, 20, 19, 18] },
@@ -280,7 +326,6 @@
             { name: '1열 (창가)', seats: [6, 5, 4, 3, 2, 1] }
         ];
 
-        // 발급해주신 실제 Firebase 키 정보 적용
         let firebaseConfig = {
             apiKey: "AIzaSyBr9qMshCYB_Qm15OUiVsLoJkxIkJ2hgNA",
             authDomain: "seat261006.firebaseapp.com",
@@ -292,110 +337,181 @@
 
         const savedCustomConfig = localStorage.getItem('custom_firebase_config');
         if (savedCustomConfig) {
-            try {
-                firebaseConfig = JSON.parse(savedCustomConfig);
-            } catch(e) {
-                console.error("Failed to parse local stored firebase config", e);
-            }
+            try { firebaseConfig = JSON.parse(savedCustomConfig); } catch(e) {}
         } else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            try {
-                firebaseConfig = JSON.parse(__firebase_config);
-            } catch (e) {
-                console.error("Failed to parse firebase config", e);
-            }
+            try { firebaseConfig = JSON.parse(__firebase_config); } catch (e) {}
         }
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Firestore Path
         const seatingDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'seating_data', 'seats_doc');
 
         let currentSeats = {};
         let currentUserSeat = null;
+        let isTeacher = false;
+        let pendingStudentName = '';
+        let unsubscribeSeats = null;
 
         function createInitialSeatMap() {
             const seats = {};
-            for (let i = 1; i <= TOTAL_SEATS; i++) {
-                seats[i] = null;
-            }
+            for (let i = 1; i <= TOTAL_SEATS; i++) seats[i] = null;
             return seats;
         }
 
         async function initAuth() {
+            const statusIndicator = document.getElementById('status-indicator');
+            const githubNotice = document.getElementById('github-notice');
+
+            if (statusIndicator) {
+                statusIndicator.textContent = 'DB 연결 확인 중...';
+                statusIndicator.className = 'font-bold text-amber-500';
+            }
+
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+                if (!auth.currentUser) {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 }
-                document.getElementById('status-indicator').textContent = '온라인 (동기화됨)';
-                document.getElementById('status-indicator').className = 'font-bold text-emerald-600';
-                document.getElementById('github-notice').classList.add('hidden');
-                
-                listenToSeatingData();
-            } catch (err) {
-                console.error("Auth error:", err);
-                document.getElementById('status-indicator').textContent = '연결 오류';
-                document.getElementById('status-indicator').className = 'font-bold text-rose-500';
-                document.getElementById('github-notice').classList.remove('hidden');
+                listenToSeats();
+            } catch (error) {
+                console.error("Auth initialization error:", error);
+                handleErrorUI(error, "익명 인증 오류");
             }
         }
 
-        function listenToSeatingData() {
-            onSnapshot(seatingDocRef, (snapshot) => {
+        function listenToSeats() {
+            if (unsubscribeSeats) unsubscribeSeats();
+
+            unsubscribeSeats = onSnapshot(seatingDocRef, (snapshot) => {
+                const statusIndicator = document.getElementById('status-indicator');
+                const githubNotice = document.getElementById('github-notice');
+
+                if (statusIndicator) {
+                    statusIndicator.textContent = '연결됨 (실시간 동기화)';
+                    statusIndicator.className = 'font-bold text-emerald-600';
+                }
+                if (githubNotice) githubNotice.classList.add('hidden');
+
                 if (snapshot.exists()) {
                     currentSeats = snapshot.data().seats || createInitialSeatMap();
                 } else {
                     currentSeats = createInitialSeatMap();
-                    setDoc(seatingDocRef, { seats: currentSeats }, { merge: true }).catch(console.error);
+                    setDoc(seatingDocRef, { seats: currentSeats }).catch(err => handleErrorUI(err, "초기 데이터 생성 실패"));
                 }
-                
-                checkLocalUserSeat();
+
+                // Check local saved student status
+                const savedName = localStorage.getItem('my_student_name');
+                if (savedName) {
+                    let foundSeat = null;
+                    for (let s = 1; s <= TOTAL_SEATS; s++) {
+                        if (currentSeats[s] && currentSeats[s].name === savedName) {
+                            foundSeat = s;
+                            break;
+                        }
+                    }
+                    if (foundSeat) {
+                        currentUserSeat = foundSeat;
+                        showResultCard(savedName, foundSeat, true);
+                    } else {
+                        currentUserSeat = null;
+                        localStorage.removeItem('my_student_name');
+                        showDrawForm();
+                    }
+                } else {
+                    showDrawForm();
+                }
+
                 renderBoard();
             }, (error) => {
-                console.error("Firestore snapshot error:", error);
-                showToast("데이터 동기화 중 오류가 발생했습니다.", "❌");
+                console.error("Snapshot error:", error);
+                handleErrorUI(error, "DB 동기화 오류");
             });
         }
 
-        function checkLocalUserSeat() {
-            const savedName = localStorage.getItem('my_student_name');
-            if (savedName) {
-                let foundSeat = null;
-                for (let num = 1; num <= TOTAL_SEATS; num++) {
-                    if (currentSeats[num] && currentSeats[num].name === savedName) {
-                        foundSeat = num;
-                        break;
-                    }
-                }
+        function handleErrorUI(error, defaultTitle) {
+            const statusIndicator = document.getElementById('status-indicator');
+            const githubNotice = document.getElementById('github-notice');
+            const codeBadge = document.getElementById('error-code-badge');
+            const summaryText = document.getElementById('error-summary-text');
+            const solutionBox = document.getElementById('error-solution-box');
 
-                if (foundSeat) {
-                    currentUserSeat = foundSeat;
-                    showResultCard(savedName, foundSeat);
-                } else {
-                    localStorage.removeItem('my_student_name');
-                    showDrawForm();
-                }
+            const errorCode = error?.code || 'unknown';
+
+            if (statusIndicator) {
+                statusIndicator.textContent = `연결 오류 (${errorCode})`;
+                statusIndicator.className = 'font-bold text-rose-500';
+            }
+
+            if (!githubNotice) return;
+            githubNotice.classList.remove('hidden');
+            if (codeBadge) codeBadge.textContent = errorCode;
+
+            if (errorCode.includes('operation-not-allowed') || errorCode.includes('admin-restricted')) {
+                summaryText.textContent = "Firebase 콘솔에서 [익명 로그인]이 활성화되지 않았습니다.";
+                solutionBox.innerHTML = `
+                    <strong>해결 방법 (Firebase 콘솔):</strong><br>
+                    1. <strong>Authentication</strong> (인증) ➔ <strong>Sign-in method</strong> 탭<br>
+                    2. 목록에서 <strong>[익명 (Anonymous)]</strong> 클릭<br>
+                    3. <strong>[사용 설정]</strong> 토글 켜기 ➔ <strong>[저장]</strong><br>
+                    4. 아래 <b>[🔄 연결 다시 시도]</b> 버튼 클릭
+                `;
+            } else if (errorCode.includes('permission-denied')) {
+                summaryText.textContent = "Firestore [보안 규칙]에서 읽기/쓰기가 차단되었습니다.";
+                solutionBox.innerHTML = `
+                    <strong>해결 방법 (Firebase 콘솔):</strong><br>
+                    1. <strong>Firestore Database</strong> ➔ <strong>[규칙 (Rules)]</strong> 탭<br>
+                    2. 기존 내용을 삭제하고 아래 코드로 변경:<br>
+                    <code class="block my-1 p-1 bg-slate-100 font-mono text-[11px] text-indigo-700 rounded">
+                    allow read, write: if true;
+                    </code>
+                    3. 우측 상단 <strong>[게시 (Publish)]</strong> 클릭 ➔ 아래 <b>[🔄 연결 다시 시도]</b> 클릭
+                `;
+            } else if (errorCode.includes('not-found')) {
+                summaryText.textContent = "Firestore 데이터베이스가 생성되지 않았습니다.";
+                solutionBox.innerHTML = `
+                    <strong>해결 방법 (Firebase 콘솔):</strong><br>
+                    1. <strong>Firestore Database</strong> ➔ <strong>[데이터베이스 만들기]</strong> 클릭<br>
+                    2. 테스트 모드로 생성 완료 후 아래 <b>[🔄 연결 다시 시도]</b> 클릭
+                `;
             } else {
-                showDrawForm();
+                summaryText.textContent = `오류 내용: ${error.message || defaultTitle}`;
+                solutionBox.innerHTML = `
+                    <strong>체크리스트:</strong><br>
+                    1. 인터넷 연결 및 AdBlock(광고차단) 끄기<br>
+                    2. Firebase 콘솔의 Firestore DB 및 익명 로그인 설정 확인<br>
+                    3. 완료 후 아래 <b>[🔄 연결 다시 시도]</b> 버튼 누르기
+                `;
             }
         }
 
-        function showResultCard(name, seatNum) {
-            document.getElementById('result-student-name').textContent = name;
-            document.getElementById('result-seat-number').textContent = seatNum;
-            document.getElementById('result-card').classList.remove('hidden');
-            document.getElementById('draw-form-card').classList.add('hidden');
+        function showResultCard(name, seatNumber, isExisting = false) {
+            const drawFormCard = document.getElementById('draw-form-card');
+            const resultCard = document.getElementById('result-card');
+            const studentNameEl = document.getElementById('result-student-name');
+            const seatNumEl = document.getElementById('result-seat-number');
+            const badgeEl = document.getElementById('result-badge');
+
+            if (studentNameEl) studentNameEl.textContent = name;
+            if (seatNumEl) seatNumEl.textContent = seatNumber;
+            if (badgeEl) badgeEl.textContent = isExisting ? '✨ 자리가 지정되었습니다!' : '🎉 새로운 자리가 선택되었습니다!';
+
+            if (drawFormCard) drawFormCard.classList.add('hidden');
+            if (resultCard) resultCard.classList.remove('hidden');
         }
 
         function showDrawForm() {
-            document.getElementById('result-card').classList.add('hidden');
-            document.getElementById('draw-form-card').classList.remove('hidden');
+            const drawFormCard = document.getElementById('draw-form-card');
+            const resultCard = document.getElementById('result-card');
+            if (drawFormCard) drawFormCard.classList.remove('hidden');
+            if (resultCard) resultCard.classList.add('hidden');
         }
 
-        window.handleDrawSeat = async function(event) {
+        window.handleDrawSeat = function(event) {
             event.preventDefault();
             const nameInput = document.getElementById('student-name-input');
             const studentName = nameInput.value.trim();
@@ -405,6 +521,43 @@
                 return;
             }
 
+            let nameExists = false;
+            for (let s = 1; s <= TOTAL_SEATS; s++) {
+                if (currentSeats[s] && currentSeats[s].name === studentName) {
+                    nameExists = true;
+                    break;
+                }
+            }
+
+            if (nameExists) {
+                pendingStudentName = studentName;
+                document.getElementById('duplicate-name-display').textContent = `'${studentName}'`;
+                document.getElementById('duplicate-modal').classList.remove('hidden');
+            } else {
+                executeSeatDraw(studentName, false);
+            }
+        };
+
+        window.rejectDuplicateName = function() {
+            document.getElementById('duplicate-modal').classList.add('hidden');
+            pendingStudentName = '';
+            const nameInput = document.getElementById('student-name-input');
+            if (nameInput) {
+                nameInput.value = '';
+                nameInput.focus();
+            }
+            showToast("이름을 다시 입력해주세요.", "✏️");
+        };
+
+        window.confirmDuplicateName = function() {
+            document.getElementById('duplicate-modal').classList.add('hidden');
+            if (pendingStudentName) {
+                executeSeatDraw(pendingStudentName, true);
+                pendingStudentName = '';
+            }
+        };
+
+        async function executeSeatDraw(studentName, forceRedraw = false) {
             const drawBtn = document.getElementById('draw-btn');
             drawBtn.disabled = true;
             drawBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -416,23 +569,20 @@
                     const sfDoc = await transaction.get(seatingDocRef);
                     let seatsData = sfDoc.exists() ? sfDoc.data().seats : createInitialSeatMap();
 
-                    for (let s = 1; s <= TOTAL_SEATS; s++) {
-                        if (seatsData[s] && seatsData[s].name === studentName) {
-                            assignedSeat = s;
-                            return;
+                    if (forceRedraw) {
+                        for (let s = 1; s <= TOTAL_SEATS; s++) {
+                            if (seatsData[s] && seatsData[s].name === studentName) {
+                                seatsData[s] = null;
+                            }
                         }
                     }
 
                     const availableSeats = [];
                     for (let s = 1; s <= TOTAL_SEATS; s++) {
-                        if (!seatsData[s]) {
-                            availableSeats.push(s);
-                        }
+                        if (!seatsData[s]) availableSeats.push(s);
                     }
 
-                    if (availableSeats.length === 0) {
-                        throw new Error("FULL");
-                    }
+                    if (availableSeats.length === 0) throw new Error("FULL");
 
                     const randomIndex = Math.floor(Math.random() * availableSeats.length);
                     assignedSeat = availableSeats[randomIndex];
@@ -447,23 +597,29 @@
 
                 localStorage.setItem('my_student_name', studentName);
                 currentUserSeat = assignedSeat;
-                showResultCard(studentName, assignedSeat);
-                showToast(`${assignedSeat}번 자리가 선택되었습니다!`, "🎉");
+                showResultCard(studentName, assignedSeat, false);
+
+                if (forceRedraw) {
+                    showToast(`${studentName} 학생의 자리가 ${assignedSeat}번으로 다시 설정되었습니다!`, "🎉");
+                } else {
+                    showToast(`${assignedSeat}번 자리가 선택되었습니다!`, "🎉");
+                }
             } catch (err) {
                 console.error("Draw seat error:", err);
                 if (err.message === "FULL") {
                     showToast("남은 자리가 없습니다!", "⚠️");
                 } else {
-                    showToast("자리 뽑기에 실패했습니다. 다시 시도해주세요.", "❌");
+                    showToast("자리 뽑기에 실패했습니다. 구글 DB 권한을 확인해주세요.", "❌");
                 }
             } finally {
                 drawBtn.disabled = false;
                 drawBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-        };
+        }
 
         function renderBoard() {
             const gridContainer = document.getElementById('seating-grid');
+            if (!gridContainer) return;
             gridContainer.innerHTML = '';
 
             let filledCount = 0;
@@ -516,23 +672,61 @@
                 gridContainer.appendChild(colDiv);
             });
 
-            document.getElementById('filled-count').textContent = filledCount;
+            const countEl = document.getElementById('filled-count');
+            if (countEl) countEl.textContent = filledCount;
         }
 
-        window.openConfigModalWithPin = function() {
-            const input = prompt("선생님 비밀번호를 입력하세요 (기본: 270107):");
-            if (input === '270107') {
-                openConfigModal();
-            } else if (input !== null) {
+        window.openTeacherAuthModal = function() {
+            document.getElementById('teacher-password-input').value = '';
+            document.getElementById('teacher-auth-modal').classList.remove('hidden');
+        };
+
+        window.closeTeacherAuthModal = function() {
+            document.getElementById('teacher-auth-modal').classList.add('hidden');
+        };
+
+        window.handleTeacherAuth = function(e) {
+            e.preventDefault();
+            const inputPw = document.getElementById('teacher-password-input').value.trim();
+
+            if (inputPw === TEACHER_PASSWORD) {
+                isTeacher = true;
+                closeTeacherAuthModal();
+                updateTeacherUI(true);
+                showToast("교사 인증이 완료되었습니다.", "🔑");
+                switchView('board');
+            } else {
                 showToast("비밀번호가 올바르지 않습니다.", "❌");
             }
         };
 
-        window.openConfigModal = function() {
-            const saved = localStorage.getItem('custom_firebase_config');
-            if (saved) {
-                document.getElementById('config-json-input').value = saved;
+        window.logoutTeacher = function() {
+            isTeacher = false;
+            updateTeacherUI(false);
+            switchView('draw');
+            showToast("로그아웃 되었습니다.", "🔒");
+        };
+
+        function updateTeacherUI(authenticated) {
+            const studentControls = document.getElementById('student-header-controls');
+            const teacherControls = document.getElementById('teacher-header-controls');
+            const teacherResultAction = document.getElementById('teacher-result-action');
+
+            if (authenticated) {
+                studentControls.classList.add('hidden');
+                teacherControls.classList.remove('hidden');
+                if (currentUserSeat) teacherResultAction.classList.remove('hidden');
+            } else {
+                studentControls.classList.remove('hidden');
+                teacherControls.classList.add('hidden');
+                teacherResultAction.classList.add('hidden');
             }
+        }
+
+        window.openConfigModal = function() {
+            if (!isTeacher) { openTeacherAuthModal(); return; }
+            const saved = localStorage.getItem('custom_firebase_config');
+            if (saved) document.getElementById('config-json-input').value = saved;
             document.getElementById('config-modal').classList.remove('hidden');
         };
 
@@ -542,17 +736,9 @@
 
         window.saveCustomConfig = function() {
             const val = document.getElementById('config-json-input').value.trim();
-            if (!val) {
-                showToast("설정 내용을 입력해주세요.", "⚠️");
-                return;
-            }
+            if (!val) { showToast("설정 내용을 입력해주세요.", "⚠️"); return; }
             try {
-                let parsed;
-                if (val.startsWith('{')) {
-                    parsed = JSON.parse(val);
-                } else {
-                    parsed = JSON.parse('{' + val.replace(/(\w+):/g, '"$1":').replace(/'/g, '"') + '}');
-                }
+                let parsed = val.startsWith('{') ? JSON.parse(val) : JSON.parse('{' + val.replace(/(\w+):/g, '"$1":').replace(/'/g, '"') + '}');
                 localStorage.setItem('custom_firebase_config', JSON.stringify(parsed));
                 showToast("Firebase 설정이 저장되었습니다. 페이지를 새로고침합니다.", "✅");
                 setTimeout(() => window.location.reload(), 1000);
@@ -568,12 +754,7 @@
         };
 
         window.confirmReset = async function() {
-            const pinInput = document.getElementById('reset-pin-input').value.trim();
-            if (pinInput !== '270107') {
-                showToast("비밀번호가 틀렸습니다! (기본: 270107)", "❌");
-                return;
-            }
-
+            if (!isTeacher) { showToast("교사 권한이 필요합니다.", "❌"); return; }
             try {
                 const emptySeats = createInitialSeatMap();
                 await setDoc(seatingDocRef, { seats: emptySeats });
@@ -595,44 +776,47 @@
             const drawBtn = document.getElementById('nav-draw-btn');
             const boardBtn = document.getElementById('nav-board-btn');
 
+            if (viewName === 'board' && !isTeacher) {
+                openTeacherAuthModal();
+                return;
+            }
+
             if (viewName === 'draw') {
                 drawView.classList.remove('hidden');
                 boardView.classList.add('hidden');
-
-                drawBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm';
-                boardBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900';
+                if (drawBtn && boardBtn) {
+                    drawBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-600 shadow-sm';
+                    boardBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900';
+                }
             } else {
                 drawView.classList.add('hidden');
                 boardView.classList.remove('hidden');
-
-                boardBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm';
-                drawBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900';
+                if (drawBtn && boardBtn) {
+                    boardBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-600 shadow-sm';
+                    drawBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900';
+                }
             }
         };
 
-        window.openResetModal = () => {
-            document.getElementById('reset-pin-input').value = '';
-            document.getElementById('reset-modal').classList.remove('hidden');
-        };
+        window.openResetModal = () => isTeacher ? document.getElementById('reset-modal').classList.remove('hidden') : openTeacherAuthModal();
         window.closeResetModal = () => document.getElementById('reset-modal').classList.add('hidden');
 
         window.openQRModal = () => {
+            if (!isTeacher) { openTeacherAuthModal(); return; }
             const currentUrl = window.location.href;
             document.getElementById('qr-url-text').textContent = currentUrl;
             document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}`;
             document.getElementById('qr-modal').classList.remove('hidden');
         };
         window.closeQRModal = () => document.getElementById('qr-modal').classList.add('hidden');
+        window.initAuth = initAuth;
 
         function showToast(message, icon = "ℹ️") {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').textContent = message;
             document.getElementById('toast-icon').textContent = icon;
-
             toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => toast.classList.add('hidden'), 3000);
         }
 
         function escapeHtml(str) {

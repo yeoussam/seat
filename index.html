@@ -174,7 +174,7 @@
                 <input 
                     type="password" 
                     id="reset-pin-input" 
-                    placeholder="비밀번호 입력" 
+                    placeholder="비밀번호 입력 (기본: 270107)" 
                     maxlength="10"
                     class="w-full px-4 py-3 text-center text-lg font-bold border-2 border-slate-300 rounded-xl focus:border-rose-500 outline-none transition"
                 />
@@ -268,7 +268,7 @@
         import { getFirestore, doc, onSnapshot, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const TOTAL_SEATS = 27;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'seating-chart-27';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'seat261006';
 
         // Column configuration: 오른쪽(창가)부터 1열(1~6번), 2열(7~11번), 3열(12~17번), 4열(18~22번), 5열(23~27번)
         // 아래 교탁 방향으로 1, 7, 12, 18, 23번이 오도록 배열 배치 (위: 뒷자리 -> 아래: 앞자리)
@@ -280,13 +280,14 @@
             { name: '1열 (창가)', seats: [6, 5, 4, 3, 2, 1] }
         ];
 
+        // 발급해주신 실제 Firebase 키 정보 적용
         let firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyForAppRunnerOnly12345",
-            authDomain: `${appId}.firebaseapp.com`,
-            projectId: appId,
-            storageBucket: `${appId}.appspot.com`,
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
+            apiKey: "AIzaSyBr9qMshCYB_Qm15OUiVsLoJkxIkJ2hgNA",
+            authDomain: "seat261006.firebaseapp.com",
+            projectId: "seat261006",
+            storageBucket: "seat261006.firebasestorage.app",
+            messagingSenderId: "397864459268",
+            appId: "1:397864459268:web:634270bf0726d5437c2951"
         };
 
         const savedCustomConfig = localStorage.getItem('custom_firebase_config');
@@ -519,8 +520,8 @@
         }
 
         window.openConfigModalWithPin = function() {
-            const input = prompt("선생님 비밀번호를 입력하세요 (기본: 1234):");
-            if (input === '1234') {
+            const input = prompt("선생님 비밀번호를 입력하세요 (기본: 270107):");
+            if (input === '270107') {
                 openConfigModal();
             } else if (input !== null) {
                 showToast("비밀번호가 올바르지 않습니다.", "❌");
@@ -568,8 +569,8 @@
 
         window.confirmReset = async function() {
             const pinInput = document.getElementById('reset-pin-input').value.trim();
-            if (pinInput !== '1234') {
-                showToast("비밀번호가 틀렸습니다! (기본: 1234)", "❌");
+            if (pinInput !== '270107') {
+                showToast("비밀번호가 틀렸습니다! (기본: 270107)", "❌");
                 return;
             }
 
